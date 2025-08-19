@@ -40,15 +40,6 @@ class Server:
             print(e)
             return None
 
-    # def _get_ssh_key(self):
-    #     """Fetch locally stored SSH key."""
-    #     try:
-    #         self.ssh_key = RSAKey.from_private_key_file(self.ssh_key_filepath)
-    #         print(f"Found SSH key at self {self.ssh_key_filepath}")
-    #         return self.ssh_key
-    #     except SSHException as e:
-    #         print(f"SSHException while getting SSH key: {e}")
-
 
     def download_file(self, filepath:str, destinationfolder: str, command:str, password:str):
 
@@ -66,14 +57,6 @@ class Server:
             inn,stdout, err =  conn.exec_command(command)
             stdout.channel.recv_exit_status()
             scp.get(filepath)
-
-            # try:
-            #     ...
-            #     #conn.exec_command("rm /home/ninjabp/dellstore_backup.sql")
-            # except SCPException as e:
-            #     print(e)
-            # inn, cmd1, err = conn.exec_command("ls -lh")
-            # print(cmd1.read().decode())
 
             # If there is more than 3 backup, remove all of them to startup a new cycle of storage
             if len(os.listdir(destinationfolder)) > 2:
