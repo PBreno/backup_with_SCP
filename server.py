@@ -2,7 +2,7 @@ import os
 import shutil
 import datetime
 
-
+from paramiko.ecdsakey import ECDSAKey
 from scp import SCPClient, SCPException
 from paramiko import AuthenticationException, SSHClient, AutoAddPolicy, RSAKey, SSHException
 from tqdm import tqdm
@@ -70,6 +70,14 @@ class Server:
                 #inn,stdout, err =  conn.exec_command(command)
                 #stdout.channel.recv_exit_status()
                 scp.get(filepath)
+
+            # try:
+            #     ...
+            #     #conn.exec_command("rm /home/ninjabp/dellstore_backup.sql")
+            # except SCPException as e:
+            #     print(e)
+            # inn, cmd1, err = conn.exec_command("ls -lh")
+            # print(cmd1.read().decode())
 
             # If there is more than 3 backup, remove all of them to startup a new cycle of storage
             if len(os.listdir(destinationfolder)) > 2:
