@@ -7,7 +7,6 @@ from server import Server
 if __name__ == '__main__':
     server = Server(SSH_REMOTE_HOST,
                     SSH_USERNAME,
-                    SSH_PASSWORD,
-                    SSH_KEY_FILEPATH)
+                    SSH_PASSWORD)
 
-    server.download_file(SSH_FILEPATH, DESTINATION_FOLDER,SSH_COMMAND, SSH_PASSWORD)
+    server.download_file(SSH_FILEPATH, DESTINATION_FOLDER,SSH_COMMAND)

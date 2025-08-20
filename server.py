@@ -2,24 +2,22 @@ import os
 import shutil
 import datetime
 
-from paramiko.ecdsakey import ECDSAKey
+
 from scp import SCPClient, SCPException
 from paramiko import AuthenticationException, SSHClient, AutoAddPolicy, RSAKey, SSHException
-
+from tqdm import tqdm
 
 class Server:
 
-    def __init__(self, host, username, password, ssh_key_filepath: str):
+    def __init__(self, host:str, username:str, password:str ):
         self.host = host
         self.username = username
         self.password = password
-        self.ssh_key_filepath = ssh_key_filepath
         self.client = None
 
 
     def get_connection(self) -> SSHClient | None:
 
-        print("Starting SSH connection")
 
         try:
 
@@ -30,27 +28,26 @@ class Server:
                 hostname= self.host,
                 username=self.username,
                 password=self.password,
-                key_filename=self.ssh_key_filepath,
                 timeout=5000,
             )
-
+            print(f"connected to the host {self.host} successful")
             return client
 
         except AuthenticationException as e:
             print(e)
             return None
 
-    # def _get_ssh_key(self):
-    #     """Fetch locally stored SSH key."""
-    #     try:
-    #         self.ssh_key = RSAKey.from_private_key_file(self.ssh_key_filepath)
-    #         print(f"Found SSH key at self {self.ssh_key_filepath}")
-    #         return self.ssh_key
-    #     except SSHException as e:
-    #         print(f"SSHException while getting SSH key: {e}")
 
+    def create_progress( self, filename:str, size:int, sent):
+        # tqdm progress bar instance
+        self.progress_bar = tqdm(total=size, unit='B', unit_scale=True, desc=filename)
 
-    def download_file(self, filepath:str, destinationfolder: str, command:str, password:str):
+        self.progress_bar.update(sent - self.progress_bar.n)
+
+        if sent >= size:
+            self.progress_bar.close()
+
+    def download_file(self, filepath:str, destinationfolder: str, command:str):
 
         conn = self.get_connection()
 
@@ -59,21 +56,20 @@ class Server:
             raise Exception("Client is not connected")
 
         try:
-
+            print(f"downloading file {filepath} to {destinationfolder}")
             #Starting the process of copy file from server to current directory
-            scp = SCPClient(conn.get_transport())
+            sftp = conn.open_sftp()
+            filesize = sftp.stat(filepath).st_size
+            progress = tqdm(total=filesize, unit='B', unit_scale=True, desc="Downloading")
+            progress.update(filesize - progress.n)
 
-            inn,stdout, err =  conn.exec_command(command)
-            stdout.channel.recv_exit_status()
-            scp.get(filepath)
+            #with tqdm(total=filesize, unit='B', unit_scale=True, desc="Downloading") as pbar:
 
-            # try:
-            #     ...
-            #     #conn.exec_command("rm /home/ninjabp/dellstore_backup.sql")
-            # except SCPException as e:
-            #     print(e)
-            # inn, cmd1, err = conn.exec_command("ls -lh")
-            # print(cmd1.read().decode())
+            with SCPClient(conn.get_transport(), progress=self.create_progress) as scp:
+
+                #inn,stdout, err =  conn.exec_command(command)
+                #stdout.channel.recv_exit_status()
+                scp.get(filepath)
 
             # If there is more than 3 backup, remove all of them to startup a new cycle of storage
             if len(os.listdir(destinationfolder)) > 2:
